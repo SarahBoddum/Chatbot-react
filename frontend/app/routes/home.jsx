@@ -1,0 +1,25 @@
+
+import { ChatInput, ChatMessages} from "../components/Chat.jsx";
+
+const messages = [{id: 1, type: 'user', content: 'Hello! Can you help me understand React Router v7?'}, 
+  {id: 2, type: 'bot', content: 'Of course! React Router v7 is the latest version that introduces several improvements including better data loading, enhanced nested routing, and improved TypeScript support. What specific aspect would you like to learn about?'}, 
+  {id: 3, type: 'user', content: 'How do nested routes work in v7?'}, 
+  {id: 4, type: 'bot', content: 'Nested routes in React Router v7 allow you to create hierarchical UI structures. You define parent routes that contain child routes, and use the <Outlet /> component to render child components. The parent route acts as a layout component that wraps its children.'}, 
+  {id: 5, type: 'user', content: "What's the difference between route() and layout() helpers?"}, 
+  {id: 6, type: 'bot', content: "Great question! The `route()` helper creates routes that add URL segments, while `layout()` creates routes that only provide UI structure without affecting the URL. Layout routes are perfect for shared components like sidebars or headers that should appear across multiple pages."}, 
+  {id: 7, type: 'user', content: "Can you show me an example of a routes.js configuration?"}, 
+  {id: 8, type: 'bot', content: "Sure! Here's a basic example: You can use route(), index(), and layout() to define your routes. For instance, you might have a layout route for your main app structure, and nested routes for different pages. Each route can have its own component and data loader."}, 
+  {id: 9, type: 'user', content: "How do I handle data loading in React Router v7?"}, 
+  {id: 10, type: 'bot', content: "React Router v7 provides excellent data loading capabilities through loader functions. You can define a `loader` function in your route component that runs before the component renders, ensuring your data is available immediately. You can access the loaded data using the `useLoaderData()` hook within your component."}
+];
+
+export default function Home() {
+  return (
+    <main className="chat-container">
+      <ChatMessages messages={messages} />
+
+      <ChatInput />
+      
+    </main>
+  );
+}
