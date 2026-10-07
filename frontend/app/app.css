@@ -70,6 +70,20 @@ body {
   color: var(--text-primary);
   flex-grow: 1;
 }
+.chat-thread-item-content{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chat-thread-item-content button {
+  visibility: hidden;
+ border: none;
+}
+.chat-thread-item-content:hover button{
+  visibility: visible;
+  color: #dd0f8e;
+  padding: 10px;
+}
 .new-chat-btn {
   display: flex;
   align-items: center;
@@ -117,7 +131,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.chat-thread-link:hover {
+.chat-thread-item:hover {
   background: var(--bg-hover);
 }
 
