@@ -1,93 +1,122 @@
-import { Outlet } from "react-router";
+import { Outlet, useLoaderData, redirect } from "react-router";
 import Sidebar from "../components/Sidebar.jsx";
 
 /**
- * STATIC DATA AT MODULE SCOPE
+ * CLIENT LOADER FUNCTION
  *
- * Moving threads data to layout demonstrates:
- * 1. DATA LIFTING: Moving data up to parent components
- * 2. PROP DRILLING: Passing data through multiple component layers
- * 3. CENTRALIZED DATA: Managing navigation data at the layout level
- * 4. COMPONENT REUSABILITY: Sidebar can work with different thread arrays
+ * Fetches the list of chat threads from Supabase before the layout renders.
+ * Key concepts:
+ * 1. PARENT ROUTE LOADER: Runs before any child route loaders
+ * 2. SHARED DATA: Data is available to this component and can be accessed by children
+ * 3. SUPABASE REST API: Direct HTTP calls to Supabase database
+ * 4. ENVIRONMENT VARIABLES: Secure way to store API credentials
+ * 5. QUERY PARAMETERS: Using URL parameters to filter and sort data
+ *
+ * This loader runs:
+ * - On initial page load
+ * - When navigating to any route under this layout
+ * - When React Router revalidates (after mutations)
  */
-const threads = [
-  {
-    id: 1,
-    href: "/chat/how-to-learn-programming",
-    title: "How to learn programming?",
-  },
-  {
-    id: 2,
-    href: "/chat/best-pizza-toppings",
-    title: "What are the best pizza toppings?",
-  },
-  {
-    id: 3,
-    href: "/chat/explain-quantum-physics",
-    title: "Can you explain quantum physics?",
-  },
-  {
-    id: 4,
-    href: "/chat/morning-routine-ideas",
-    title: "Help me create a morning routine",
-  },
-  {
-    id: 5,
-    href: "/chat/weekend-activity-suggestions",
-    title: "What should I do this weekend?",
-  },
-  { id: 6, href: "/chat/why-sky-blue", title: "Why is the sky blue?" },
-  {
-    id: 7,
-    href: "/chat/learn-new-language",
-    title: "How do I learn a new language?",
-  },
-  {
-    id: 8,
-    href: "/chat/meaning-of-life",
-    title: "What's the meaning of life?",
-  },
-  { id: 9, href: "/chat/funny-joke-please", title: "Tell me a funny joke" },
-  {
-    id: 10,
-    href: "/chat/healthy-dinner-ideas",
-    title: "What's a healthy dinner idea?",
-  },
-  {
-    id: 11,
-    href: "/chat/good-book-recommendations",
-    title: "Recommend me a good book",
-  },
-  {
-    id: 12,
-    href: "/chat/creative-writing-prompt",
-    title: "Give me a creative writing prompt",
-  },
-  {
-    id: 13,
-    href: "/chat/fix-slow-computer",
-    title: "My computer is slow, help?",
-  },
-  {
-    id: 14,
-    href: "/chat/interesting-history-fact",
-    title: "Tell me an interesting history fact",
-  },
-];
+export async function clientLoader() {
+  // Get Supabase credentials from environment variables
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  // Construct the API endpoint URL
+  // - /rest/v1/threads: Access the threads table
+  // - select=*: Get all columns
+  // - order=created_at.desc: Sort by newest first
+  const url = `${supabaseUrl}/rest/v1/threads?select=*&order=created_at.desc`;
+
+  // Make the request with required Supabase headers
+  const response = await fetch(url, {
+    headers: {
+      apikey: supabaseKey, // Required for authentication
+      Authorization: `Bearer ${supabaseKey}`, // Required for authorization
+    },
+  });
+
+  // Check if the request was successful
+  if (!response.ok) {
+    throw new Error(`Failed to fetch threads: ${response.status}`);
+  }
+
+  // Parse the JSON response
+  const threads = await response.json();
+
+  return { threads };
+}
+
+/**
+ * CLIENT ACTION FUNCTION
+ *
+ * Handles thread deletion requests.
+ * Key concepts:
+ * 1. INTENT PATTERN: Uses form field to identify the action type
+ * 2. DELETE REQUEST: Sends DELETE request to Supabase
+ * 3. CASCADE DELETE: Supabase automatically deletes related messages
+ * 4. AUTOMATIC REVALIDATION: Loader re-runs to refresh thread list
+ *
+ * The action runs:
+ * - When a Form with method="post" is submitted
+ * - Checks the "intent" field to determine the action
+ */
+export async function clientAction({ request }) {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  // Extract form data
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  const threadId = formData.get("threadId");
+
+  // Handle delete intent
+  if (intent === "delete" && threadId) {
+    try {
+      // DELETE request to Supabase
+      // Messages are automatically deleted due to CASCADE
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/threads?id=eq.${threadId}`,
+        {
+          method: "DELETE",
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        return { error: `Failed to delete thread: ${response.status}` };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { error: error.message };
+    }
+  }
+
+  return null;
+}
 
 /**
  * Layout Component
  *
- * Now demonstrates PROP DRILLING and DATA FLOW:
- * 1. DATA MANAGEMENT: Layout manages navigation threads data
- * 2. PROP DRILLING: Data flows Layout -> Sidebar -> ChatThreadsList
- * 3. CENTRALIZED CONTROL: Navigation data controlled at layout level
- * 4. COMPONENT COORDINATION: Parent coordinates data between child components
+ * Now uses DATA LOADING and MUTATIONS!
+ *
+ * Key concepts:
+ * 1. useLoaderData() HOOK: Accesses data from clientLoader
+ * 2. NO STATE MANAGEMENT: Data comes from loader, not useState
+ * 3. LAYOUT PATTERN: Wraps child routes with consistent UI (sidebar)
+ * 4. OUTLET: Renders the matched child route component
+ * 5. NO DELETE CALLBACK: Sidebar handles deletion with useFetcher
  */
 export default function Layout() {
+  // Access threads data from the loader
+  const { threads } = useLoaderData();
+
   return (
     <div className="app-layout">
-      {/* Passing threads as props - starts the prop drilling chain! */}
       <Sidebar threads={threads} />
       <main className="main-content">
         <Outlet />

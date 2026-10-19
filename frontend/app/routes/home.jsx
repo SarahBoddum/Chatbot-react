@@ -1,15 +1,16 @@
+import React from "react";
 import { ChatMessages, ChatInput } from "../components/Chat.jsx";
 
 /**
- * STATIC DATA AT MODULE SCOPE
+ * INITIAL MESSAGES DATA
  *
- * Moving data to module scope demonstrates several key concepts:
- * 1. DATA LIFTING: Moving data up to parent components
- * 2. PROPS PASSING: Parent components pass data down to children
- * 3. SEPARATION OF CONCERNS: Data management vs. UI rendering
- * 4. REUSABILITY: ChatMessages can now work with different message arrays
+ * This data will be moved to component state to demonstrate:
+ * 1. STATE MANAGEMENT: Converting static data to dynamic state
+ * 2. STATE UPDATES: Adding new messages through user interaction
+ * 3. LIFTING STATE UP: Managing state in parent component
+ * 4. CALLBACK PROPS: Passing state update functions to child components
  */
-const messages = [
+const initialMessages = [
   {
     id: 1,
     type: "user",
@@ -70,18 +71,35 @@ const messages = [
 /**
  * Home Component (Chat Page)
  *
- * Now demonstrates DATA FLOW and PROPS PASSING:
- * 1. LIFTING STATE UP: Data moved from child to parent component
- * 2. PROPS PASSING: Passing messages array down to ChatMessages
- * 3. COMPONENT REUSABILITY: ChatMessages can now work with any messages array
- * 4. SEPARATION OF CONCERNS: Home manages data, ChatMessages handles rendering
+ * Now demonstrates STATE MANAGEMENT and CALLBACK PROPS:
+ * 1. STATE HOOKS: Using useState to manage dynamic messages array
+ * 2. CALLBACK FUNCTIONS: Creating functions to update state
+ * 3. PROPS PASSING: Passing both data and functions to child components
+ * 4. STATE LIFTING: Managing shared state in the parent component
+ * 5. IMMUTABLE UPDATES: Using spread operator to update state arrays
  */
 export default function Home() {
+  // STATE: Convert static data to dynamic state
+  const [messages, setMessages] = React.useState(initialMessages);
+
+  // CALLBACK FUNCTION: Add new message to state array
+  const addMessage = (content) => {
+    const newMessage = {
+      id: messages.length + 1, // Simple ID generation
+      type: "user",
+      content: content,
+    };
+
+    // IMMUTABLE UPDATE: Create new array with spread operator
+    setMessages([...messages, newMessage]);
+  };
+
   return (
     <main className="chat-container">
-      {/* Passing messages as props - this is DATA FLOW! */}
+      {/* Passing messages state as props - DATA FLOW! */}
       <ChatMessages messages={messages} />
-      <ChatInput />
+      {/* Passing callback function as props - CALLBACK PROPS! */}
+      <ChatInput onAddMessage={addMessage} />
     </main>
   );
 }
