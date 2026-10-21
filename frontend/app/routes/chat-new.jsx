@@ -1,5 +1,6 @@
 import { useActionData, redirect } from "react-router";
 import { ChatInput, ChatMessages } from "../components/Chat.jsx";
+import {useState} from "react";
 
 /**
  * CLIENT ACTION FUNCTION
@@ -96,6 +97,7 @@ export async function clientAction({ request }) {
 export default function ChatNew() {
   // Access action result for error display
   const actionData = useActionData();
+  const [theme, setTheme] = useState("light");
 
   return (
     <main className="chat-container">
@@ -103,8 +105,8 @@ export default function ChatNew() {
         <h2>Start a new conversation</h2>
         <p>Type a message below to begin chatting</p>
       </div>
-      <ChatMessages />
-      <ChatInput />
+      <ChatMessages  theme={theme}/>
+      <ChatInput theme={theme} setTheme={setTheme}  />
       {actionData?.error && (
         <div className="error-message">{actionData.error}</div>
       )}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import { ChatMessages, ChatInput } from "../components/Chat.jsx";
 
 /**
@@ -81,6 +81,7 @@ const initialMessages = [
 export default function Home() {
   // STATE: Convert static data to dynamic state
   const [messages, setMessages] = React.useState(initialMessages);
+  const [theme, setTheme] = useState("light");
 
   // CALLBACK FUNCTION: Add new message to state array
   const addMessage = (content) => {
@@ -97,9 +98,9 @@ export default function Home() {
   return (
     <main className="chat-container">
       {/* Passing messages state as props - DATA FLOW! */}
-      <ChatMessages messages={messages} />
+      <ChatMessages messages={messages} theme={theme} />
       {/* Passing callback function as props - CALLBACK PROPS! */}
-      <ChatInput onAddMessage={addMessage} />
+      <ChatInput onAddMessage={addMessage} theme={theme} setTheme={setTheme} />
     </main>
   );
 }

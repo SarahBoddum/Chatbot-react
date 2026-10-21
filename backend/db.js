@@ -4,7 +4,7 @@ import postgres from "postgres";
   const database_url = process.env.DATABASE_URL;
 
   if (!database_url) 
-    { throw new Error("DATABASE_URL mangler. Tjek din .env-fil.");throw new Error (`Failed to fetch the database`)
+    { throw new Error("DATABASE_URL mangler. Tjek din .env-fil.");
   }
 
 

@@ -1,5 +1,11 @@
 /* CSS Variables */
 :root {
+    /*---primary----*/
+  --light:#ffffff; --dark: #333538; 
+/*semantisk---*/
+--messages-bg-light: var(--light);
+--messages-bg-dark: var(--dark);
+/*---dan'ske*/
   --bg-primary: #ffffff;
   --bg-secondary: #f9f9f9;
   --bg-hover: #f0f0f0;
@@ -263,7 +269,9 @@ body {
   color: var(--text-muted);
 }
 
+/* Chat interface styles */
 .chat-messages {
+  background-color: var(--messages-bg-light);
   flex: 1;
   padding: 2rem 1rem;
   display: flex;
@@ -272,6 +280,16 @@ body {
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
+}
+
+/* Light theme */
+.chat-messages.theme-light {
+  background-color: var(--messages-bg-light);
+}
+
+/* Dark theme */
+.chat-messages.theme-dark {
+  background-color: var(--messages-bg-dark);
 }
 
 .message {

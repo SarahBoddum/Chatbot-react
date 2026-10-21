@@ -6,7 +6,7 @@ import {
   href,
 } from "react-router";
 import { ChatMessages, ChatInput } from "../components/Chat.jsx";
-
+import { useState } from "react";
 /**
  * ERROR BOUNDARY COMPONENT
  *
@@ -62,45 +62,33 @@ export function ErrorBoundary() {
  * - When React Router revalidates data
  */
 export async function clientLoader({ params }) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const apiUrl = import.meta.env.VITE_API_URL;
+
 
   // Fetch thread metadata
   // - id=eq.{threadId}: Filter to get only this specific thread
   // - select=*: Get all columns
-  const threadUrl = `${supabaseUrl}/rest/v1/threads?id=eq.${params.threadId}&select=*`;
+  const threadUrl = `${apiUrl}/api/threads/${params.threadId}`;
+  const threadResponse = await fetch(threadUrl);
 
-  const threadResponse = await fetch(threadUrl, {
-    headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-    },
-  });
-
-  if (!threadResponse.ok) {
-    throw new Error(`Failed to fetch thread: ${threadResponse.status}`);
+  if (threadResponse.status === 404) {
+    throw new Response("Thread not found", { status: 404 });
   }
 
   // Supabase returns an array, even for single results
-  const threadData = await threadResponse.json();
-  const thread = threadData[0];
+  const thread = await threadResponse.json();
 
   // If thread not found, throw error (will be caught by ErrorBoundary)
   if (!thread) {
     throw new Response("Thread not found", { status: 404 });
   }
-
+  
   // Fetch messages for this thread
   // - thread_id=eq.{threadId}: Filter messages by thread
   // - order=created_at.asc: Sort oldest to newest (chronological)
-  const messagesUrl = `${supabaseUrl}/rest/v1/messages?thread_id=eq.${params.threadId}&select=*&order=created_at.asc`;
+  const messagesUrl = `${apiUrl}/api/threads/${params.threadId}/messages`;
 
-  const messagesResponse = await fetch(messagesUrl, {
-    headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-    },
-  });
+  const messagesResponse = await fetch(messagesUrl);
 
   if (!messagesResponse.ok) {
     throw new Error(`Failed to fetch messages: ${messagesResponse.status}`);
@@ -129,8 +117,8 @@ export async function clientLoader({ params }) {
  * - Before the loader re-runs (automatic revalidation)
  */
 export async function clientAction({ params, request }) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const url = `${apiUrl}/api/threads/${params.threadId}/messages`;
 
   // Extract form data from the request
   const formData = await request.formData();
@@ -143,33 +131,33 @@ export async function clientAction({ params, request }) {
 
   // Create the message object
   const newMessage = {
-    thread_id: params.threadId,
     type: "user",
     content: content.trim(),
   };
 
-  // POST to Supabase to create the message
+// POST to backend API to create the message
   try {
-    const response = await fetch(`${supabaseUrl}/rest/v1/messages`, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(newMessage),
     });
 
+  if (response.status === 400) {
+      const data = await response.json();
+      return { error: data.error };
+    }
     if (!response.ok) {
       return { error: `Failed to create message: ${response.status}` };
     }
-
     // Return success - loader will automatically revalidate
     return { success: true };
   } catch (error) {
     return { error: error.message };
   }
-}
+};
 
 /**
  * Chat Thread Route Component
@@ -186,7 +174,7 @@ export async function clientAction({ params, request }) {
 export default function ChatThread() {
   // Access the thread and messages data from the loader
   const { thread, messages } = useLoaderData();
-
+const [theme, setTheme] = useState("light");
   // Access the action result (success or error)
   const actionData = useActionData();
 
@@ -195,8 +183,8 @@ export default function ChatThread() {
       <div className="chat-thread-header">
         <h2>{thread.title}</h2>
       </div>
-      <ChatMessages messages={messages} />
-      <ChatInput />
+      <ChatMessages messages={messages} theme={theme}/>
+      <ChatInput theme={theme} setTheme={setTheme}  />
       {actionData?.error && (
         <div className="error-message">{actionData.error}</div>
       )}

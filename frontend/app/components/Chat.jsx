@@ -40,11 +40,10 @@ function Message({ type = "user", children }) {
  * 4. GRACEFUL DEGRADATION: Component renders empty list if no messages provided
  * 5. CLEANER CODE: Direct access to messages instead of props.messages
  */
-function ChatMessages({ messages = [] }) {
-  
+function ChatMessages({ messages = [], theme }) {
+    console.log("ChatMessages theme:", theme);
   return (
-    <div className="chat-messages">
-      {/* Using destructured messages with safe default! */}
+    <div className={`chat-messages theme-${theme}`}>
       {messages.map((message) => (
         <Message key={message.id} type={message.type}>
           {message.content}
@@ -65,9 +64,9 @@ function ChatMessages({ messages = [] }) {
  * 4. NO STATE NEEDED: Form clears and data reloads automatically
  * 5. DECLARATIVE: Just render the form, React Router handles the rest
  */
-function ChatInput() {
-  const [theme, setTheme] = useState('light');
-  
+function ChatInput({ theme, setTheme }) {
+    console.log("theme:", theme);
+  console.log("setTheme:", typeof setTheme);
   return (
     <div className="chat-input-container">
       <Form method="post" className="chat-input-wrapper">
@@ -78,12 +77,22 @@ function ChatInput() {
           rows="1"
           required
         />
+
         <button className="send-button" type="submit">
           Send
         </button>
-        <button type="button" className="send-button"
-            onClick={() => setTheme(current => current === 'light' ? 'dark' : 'light')}
-          > {theme === 'Lyst' ? 'Mørkt' : 'Lyst'}</button>
+
+        <button
+  type="button"
+  className="send-button"
+  onClick={() => {
+    setTheme(current =>
+      current === "light" ? "dark" : "light"
+    );
+  }}
+>
+  {theme === "light" ? "Mørkt tema" : "Lyst tema"}
+</button>
       </Form>
     </div>
   );
