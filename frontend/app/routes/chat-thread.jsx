@@ -1,6 +1,7 @@
 import {
   useLoaderData,
   useActionData,
+  useNavigation,
   Link,
   useRouteError,
   href,
@@ -178,12 +179,37 @@ const [theme, setTheme] = useState("light");
   // Access the action result (success or error)
   const actionData = useActionData();
 
+
+const navigation = useNavigation();
+
+let displayMessages = [...messages];
+
+if (navigation.formData?.has("message")) {
+  const optimisticUserMessage = {
+    id: "optimistic-user",
+    type: "user",
+    content: navigation.formData.get("message"),
+  };
+
+  const optimisticBotMessage = {
+    id: "optimistic-bot",
+    type: "bot",
+    content: "AI is thinking...",
+  };
+
+  displayMessages.push(
+    optimisticUserMessage,
+    optimisticBotMessage
+  );
+}
+
+
   return (
     <main className="chat-container">
       <div className="chat-thread-header">
         <h2>{thread.title}</h2>
       </div>
-      <ChatMessages messages={messages} theme={theme}/>
+      <ChatMessages messages={displayMessages} theme={theme}/>
       <ChatInput theme={theme} setTheme={setTheme}  />
       {actionData?.error && (
         <div className="error-message">{actionData.error}</div>

@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import { Form } from "react-router";
+import { Form, useNavigation } from "react-router";
 
 /**
  * Chat Components
@@ -65,6 +65,7 @@ function ChatMessages({ messages = [], theme }) {
  * 5. DECLARATIVE: Just render the form, React Router handles the rest
  */
 function ChatInput({ theme, setTheme }) {
+  const navigation = useNavigation();
     console.log("theme:", theme);
   console.log("setTheme:", typeof setTheme);
   return (

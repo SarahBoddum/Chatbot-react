@@ -49,8 +49,7 @@ export async function clientLoader() {
  * - Checks the "intent" field to determine the action
  */
 export async function clientAction({ request }) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const apiUrl = import.meta.env.VITE_API_URL;
 
   // Extract form data
   const formData = await request.formData();
@@ -63,13 +62,9 @@ export async function clientAction({ request }) {
       // DELETE request to Supabase
       // Messages are automatically deleted due to CASCADE
       const response = await fetch(
-        `${supabaseUrl}/rest/v1/threads?id=eq.${threadId}`,
+        `${apiUrl}/api/threads/${threadId}`,
         {
           method: "DELETE",
-          headers: {
-            apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
-          },
         },
       );
 
