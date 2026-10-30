@@ -3,6 +3,7 @@ import {
   useActionData,
   useNavigation,
   Link,
+  Outlet,
   useRouteError,
   href,
 } from "react-router";
@@ -206,8 +207,10 @@ if (navigation.formData?.has("message")) {
 
   return (
     <main className="chat-container">
+      <Outlet></Outlet>
       <div className="chat-thread-header">
         <h2>{thread.title}</h2>
+        <Link to="edit">Edit</Link>
       </div>
       <ChatMessages messages={displayMessages} theme={theme}/>
       <ChatInput theme={theme} setTheme={setTheme}  />

@@ -92,7 +92,7 @@ function ChatInput({ theme, setTheme }) {
     );
   }}
 >
-  {theme === "light" ? "Mørkt tema" : "Lyst tema"}
+  {theme === "light" ? "Dob core" : "Barbie core"}
 </button>
       </Form>
     </div>

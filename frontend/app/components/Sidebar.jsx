@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import { href, Link, NavLink, useFetcher } from "react-router";
 
 /**
@@ -25,9 +25,10 @@ import { href, Link, NavLink, useFetcher } from "react-router";
  * 2. FASTER NAVIGATION: No server roundtrip, instant UI updates
  * 3. SPA BEHAVIOR: Maintains application state during navigation
  */
-function SidebarHeader() {
+function SidebarHeader({theme}) {
+  
   return (
-    <div className="sidebar-header">
+    <div className={`sidebar-header ${theme === "dark" ? "theme-dark" : ""}`}>
     
       <h2 className="chatbot-title">Chatbot</h2>
       <Link to="/chat/new" className="new-chat-btn">
@@ -50,7 +51,7 @@ function SidebarHeader() {
  * 7. ACTIVE STYLING: Highlights the currently displayed thread
  * 8. PENDING STYLING: Shows pulsating animation while data is loading
  */
-function ChatThreadItem({ thread }) {
+function ChatThreadItem({ thread, theme }) {
   const { id, title } = thread;
   const fetcher = useFetcher();
 
@@ -59,7 +60,7 @@ function ChatThreadItem({ thread }) {
     fetcher.state !== "idle" && fetcher.formData?.get("threadId") === id;
 
   return (
-    <li className="chat-thread-item">
+    <li className={`chat-thread-item ${theme === "dark" ? "theme-dark" : ""}`}>
       <div className="chat-thread-item-content">
         <NavLink
           to={href("/chat/:threadId", { threadId: id })}
@@ -106,7 +107,7 @@ function ChatThreadItem({ thread }) {
  * 6. REAL-TIME FILTERING: Updates as user types
  * 7. NO CALLBACK DRILLING: ChatThreadItem uses useFetcher directly
  */
-function ChatThreadsList({ threads = [] }) {
+function ChatThreadsList({ threads = [], theme }) {
   // LOCAL STATE: Managing search input value (controlled component)
   const [searchValue, setSearchValue] = React.useState("");
 
@@ -127,7 +128,7 @@ function ChatThreadsList({ threads = [] }) {
       <div className="search-container">
         <input
           type="text"
-          className="search-input"
+          className={`search-input ${theme === "dark" ? "theme-dark" : ""}`}
           placeholder="Search conversations..."
           value={searchValue}
           onChange={handleSearchChange}
@@ -150,9 +151,9 @@ function ChatThreadsList({ threads = [] }) {
  * Handles the user profile section at the bottom of the sidebar.
  * Demonstrates component modularity and independence.
  */
-function SidebarFooter() {
+function SidebarFooter({theme}) {
   return (
-    <div className="sidebar-footer">
+    <div className={`sidebar-footer ${theme === "dark" ? "theme-dark" : ""}`}>
       <a href="/profile" className="user-profile">
         <img
           src="https://ui-avatars.com/api/?name=Batman&background=0D0D0D&color=fff&size=40"
@@ -177,13 +178,12 @@ function SidebarFooter() {
  * 4. COLOCATION: Actions live where they're used (ChatThreadItem)
  * 5. COMPOSITION: Build complex UIs from simple, focused components
  */
-export default function Sidebar({ threads }) {
+export default function Sidebar({ threads, theme }) {
   return (
-    <aside className="sidebar">
-      {/* Component composition - no callback prop drilling needed */}
-      <SidebarHeader />
-      <ChatThreadsList threads={threads} />
-      <SidebarFooter />
+    <aside className={`sidebar ${theme === "dark" ? "theme-dark" : ""}`}>
+      <SidebarHeader theme={theme} />
+      <ChatThreadsList threads={threads} theme={theme}/>
+      <SidebarFooter theme={theme}/>
     </aside>
   );
 }

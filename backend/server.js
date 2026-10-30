@@ -231,6 +231,88 @@ app.post("/api/test-groq", async (req, res) => {
 });
 
 
+app.post("/api/threads", async (req, res) => {
+  const { title, content } = req.body;
+
+  if (typeof title !== "string" || !title.trim()) {
+    return res.status(400).json({
+      error: "Title is required",
+    });
+  }
+
+  if (typeof content !== "string" || !content.trim()) {
+    return res.status(400).json({
+      error: "Content is required",
+    });
+  }
+
+  try {
+    const threads = await sql`
+      INSERT INTO threads (title)
+      VALUES (${title.trim()})
+      RETURNING *
+    `;
+
+    const thread = threads[0];
+
+    const messages = await sql`
+      INSERT INTO messages (thread_id, type, content)
+      VALUES (${thread.id}, ${"user"}, ${content.trim()})
+      RETURNING *
+    `;
+
+    const message = messages[0];
+
+    return res.status(201).json({
+      thread,
+      message,
+    });
+  } catch (error) {
+    console.error("Error creating thread:", error);
+
+    return res.status(500).json({
+      error: "Failed to create thread",
+    });
+  }
+});
+
+
+app.patch("/api/threads/:id", async (req, res) => {
+  const threadId =req.params.id; 
+  const { title } = req.body;
+
+   if (typeof title !== "string" || !title.trim()) {
+    return res.status(400).json({
+      error: "Title is required",
+    });
+  }
+  try{
+    const threads = await sql `
+    UPDATE threads 
+    SET title = ${title.trim()}
+    WHERE id = ${threadId}
+    RETURNING *
+    `;
+
+    if (threads.length === 0) {
+  return res.status(404).json({
+    error: "Thread not found",
+  });
+}
+
+    return res.status(200).json({
+      thread: threads[0],
+    });
+  } catch (error) {
+      console.error("Error updating thread title:", error);
+
+      return res.status(500).json({
+        error: "Failed to update thread title"
+      })
+  }
+});
+
+
 app.delete("/api/threads/:id", async (req, res) => {
   const threadId = req.params.id;
 

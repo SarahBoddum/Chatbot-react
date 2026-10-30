@@ -1,5 +1,6 @@
 import { Outlet, useLoaderData, redirect } from "react-router";
 import Sidebar from "../components/Sidebar.jsx";
+import { useState } from "react";
 
 /**
  * CLIENT LOADER FUNCTION
@@ -94,14 +95,15 @@ const apiUrl = import.meta.env.VITE_API_URL;
  * 5. NO DELETE CALLBACK: Sidebar handles deletion with useFetcher
  */
 export default function Layout() {
+    const [theme, setTheme] = useState("light");
   // Access threads data from the loader
   const { threads } = useLoaderData();
 
   return (
     <div className="app-layout">
-      <Sidebar threads={threads} />
+      <Sidebar threads={threads} theme={theme} />
       <main className="main-content">
-        <Outlet />
+          <Outlet context={{ theme, setTheme }} />
       </main>
     </div>
   );

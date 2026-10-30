@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import { ChatMessages, ChatInput } from "../components/Chat.jsx";
-
+import { useOutletContext } from "react-router";
 /**
  * INITIAL MESSAGES DATA
  *
@@ -79,9 +79,10 @@ const initialMessages = [
  * 5. IMMUTABLE UPDATES: Using spread operator to update state arrays
  */
 export default function Home() {
+
   // STATE: Convert static data to dynamic state
   const [messages, setMessages] = React.useState(initialMessages);
-  const [theme, setTheme] = useState("light");
+  const { theme, setTheme } = useOutletContext();
 
   // CALLBACK FUNCTION: Add new message to state array
   const addMessage = (content) => {
