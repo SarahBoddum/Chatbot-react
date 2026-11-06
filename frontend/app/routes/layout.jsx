@@ -1,5 +1,9 @@
 import { Outlet, useLoaderData, redirect } from "react-router";
 import Sidebar from "../components/Sidebar.jsx";
+import { useState, useEffect } from "react";
+import { apiFetch } from "../lib/apiFetch.js";
+import { supabase } from "../lib/supabase.js";
+
 
 /**
  * CLIENT LOADER FUNCTION
@@ -18,13 +22,7 @@ import Sidebar from "../components/Sidebar.jsx";
  * - When React Router revalidates (after mutations)
  */
 export async function clientLoader() {
-  const apiUrl = import.meta.env.VITE_API_URL;
-  console.log("API URL:", apiUrl);
-
-  const url = `${apiUrl}/api/threads`;
-  console.log("Fetch URL:", url);
-
-  const response = await fetch(url);
+ const response = await apiFetch("/api/threads");
 
   if (!response.ok) {
     throw new Error(`Failed to fetch threads: ${response.status}`);
@@ -49,9 +47,6 @@ export async function clientLoader() {
  * - Checks the "intent" field to determine the action
  */
 export async function clientAction({ request }) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
   // Extract form data
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -60,24 +55,34 @@ export async function clientAction({ request }) {
   // Handle delete intent
   if (intent === "delete" && threadId) {
     try {
-      // DELETE request to Supabase
+      // DELETE request to API
       // Messages are automatically deleted due to CASCADE
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/threads?id=eq.${threadId}`,
-        {
-          method: "DELETE",
-          headers: {
-            apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
-          },
-        },
-      );
+      const response = await apiFetch(`/api/threads/${threadId}`, {
+        method: "DELETE",
+      });
 
       if (!response.ok) {
-        return { error: `Failed to delete thread: ${response.status}` };
+        return {
+          error: `Failed to delete thread: ${response.status}`,
+        };
       }
 
       return { success: true };
+    } catch (error) {
+      return { error: error.message };
+    }
+  }
+
+  // Handle logout intent
+  if (intent === "logout") {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return redirect("/login");
     } catch (error) {
       return { error: error.message };
     }
@@ -99,14 +104,19 @@ export async function clientAction({ request }) {
  * 5. NO DELETE CALLBACK: Sidebar handles deletion with useFetcher
  */
 export default function Layout() {
+    const [theme, setTheme] = useState("light");
   // Access threads data from the loader
   const { threads } = useLoaderData();
 
+  useEffect(() => {
+    document.body.className = `theme-${theme}`;
+  }, [theme]);
+
   return (
     <div className="app-layout">
-      <Sidebar threads={threads} />
+      <Sidebar threads={threads} theme={theme} />
       <main className="main-content">
-        <Outlet />
+          <Outlet context={{ theme, setTheme }} />
       </main>
     </div>
   );

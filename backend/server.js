@@ -51,6 +51,7 @@ app.get("/api/threads/:id", async (req, res ) => {
 });
 
 app.get("/api/threads/:id/messages", async (req, res) => {
+
     const threadId = req.params.id;
 
   try{
@@ -70,6 +71,7 @@ app.get("/api/threads/:id/messages", async (req, res) => {
 });
 
 app.post("/api/threads/:id/messages", async (req, res) => {
+  console.log("POST message-route blev kaldt");
   const threadId = req.params.id;
   const { type, content } = req.body;
 
@@ -86,8 +88,82 @@ app.post("/api/threads/:id/messages", async (req, res) => {
       VALUES (${threadId}, ${type}, ${content})
       RETURNING id, thread_id, type, content, created_at
     `;
+  const userMessage = messages[0];
 
-    res.status(201).json(messages[0]);
+  const conversationHistory = await sql`
+    SELECT * 
+    FROM messages
+    WHERE thread_id = ${threadId}
+    ORDER BY created_at ASC
+  `;
+  const groqMessages = conversationHistory.map((message) =>{
+    return {
+      role: message.type === "bot" ? "assistant" : "user",
+      content: message.content
+    }
+  });
+
+  const systemPrompt = {
+    role: "system",
+    content: "You are a friendly and helpful chatbot. You answer clearly, use a warm tone, and explain things in a simple way."
+  }
+
+  groqMessages.unshift(systemPrompt);
+  
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+  return res.status(500).json({
+    error: "GROQ_API_KEY is missing",
+  });
+}
+
+const response = await fetch(
+  "https://api.groq.com/openai/v1/chat/completions",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+   
+    body: JSON.stringify({
+      model: "openai/gpt-oss-20b",
+      messages: groqMessages,
+    }),
+
+  }
+);
+
+if (!response.ok) {
+  const errorDetails = await response.text();
+
+  console.error("Groq API-fejl:", response.status, errorDetails);
+
+  return res.status(502).json({
+    error: "Groq API request failed",
+    details: errorDetails,
+  });
+}
+
+const data = await response.json();
+const botContent = data.choices[0].message.content;
+
+
+const botMessages = await sql`
+  INSERT INTO messages (thread_id, type, content)
+  VALUES (${threadId}, ${"bot"}, ${botContent})
+  RETURNING id, thread_id, type, content, created_at
+`;
+
+const botMessage = botMessages[0];
+
+res.status(201).json({
+  userMessage,
+  botMessage,
+});
+
+   
   } catch (error) {
     console.error("Fejl ved oprettelse af besked:", error);
 
@@ -96,6 +172,175 @@ app.post("/api/threads/:id/messages", async (req, res) => {
     });
   }
 });
+
+app.post("/api/test-groq", async (req, res) => {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  // 1. Tjek om API-nøglen findes
+  if (!apiKey) {
+    return res.status(500).json({
+      error: "GROQ_API_KEY is missing"
+    });
+  }
+
+  // 2. Send request til Groq
+  try {
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-20b",
+          messages: [
+            {
+              role: "user",
+              content: "..."
+            }
+          ]
+        })
+      }
+    );
+
+    // 3. Tjek om Groq-requesten lykkedes
+    if (!response.ok) {
+      const errorData = await response.json();
+
+      return res.status(response.status).json({
+        error: errorData.error?.message || "Groq API request failed"
+      });
+    }
+
+    // 4. Læs svaret fra Groq
+    const data = await response.json();
+
+    return res.status(200).json({
+      reply: data.choices[0].message.content
+    });
+
+  } catch (error) {
+    console.error("Groq request failed:", error);
+
+    return res.status(500).json({
+      error: "Could not connect to Groq"
+    });
+  }
+});
+
+
+app.post("/api/threads", async (req, res) => {
+  const { title, content } = req.body;
+
+  if (typeof title !== "string" || !title.trim()) {
+    return res.status(400).json({
+      error: "Title is required",
+    });
+  }
+
+  if (typeof content !== "string" || !content.trim()) {
+    return res.status(400).json({
+      error: "Content is required",
+    });
+  }
+
+  try {
+    const threads = await sql`
+      INSERT INTO threads (title)
+      VALUES (${title.trim()})
+      RETURNING *
+    `;
+
+    const thread = threads[0];
+
+    const messages = await sql`
+      INSERT INTO messages (thread_id, type, content)
+      VALUES (${thread.id}, ${"user"}, ${content.trim()})
+      RETURNING *
+    `;
+
+    const message = messages[0];
+
+    return res.status(201).json({
+      thread,
+      message,
+    });
+  } catch (error) {
+    console.error("Error creating thread:", error);
+
+    return res.status(500).json({
+      error: "Failed to create thread",
+    });
+  }
+});
+
+
+app.patch("/api/threads/:id", async (req, res) => {
+  const threadId =req.params.id; 
+  const { title } = req.body;
+
+   if (typeof title !== "string" || !title.trim()) {
+    return res.status(400).json({
+      error: "Title is required",
+    });
+  }
+  try{
+    const threads = await sql `
+    UPDATE threads 
+    SET title = ${title.trim()}
+    WHERE id = ${threadId}
+    RETURNING *
+    `;
+
+    if (threads.length === 0) {
+  return res.status(404).json({
+    error: "Thread not found",
+  });
+}
+
+    return res.status(200).json({
+      thread: threads[0],
+    });
+  } catch (error) {
+      console.error("Error updating thread title:", error);
+
+      return res.status(500).json({
+        error: "Failed to update thread title"
+      })
+  }
+});
+
+
+app.delete("/api/threads/:id", async (req, res) => {
+  const threadId = req.params.id;
+
+  try {
+    const deletedThreads = await sql`
+      DELETE FROM threads
+      WHERE id = ${threadId}
+      RETURNING id
+    `;
+
+    if (deletedThreads.length === 0) {
+      return res.status(404).json({
+        error: "The thread was not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Thread deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting thread:", error);
+
+    return res.status(500).json({
+      error: "Failed to delete thread",
+    });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Serveren kører på http://localhost:${PORT}`);

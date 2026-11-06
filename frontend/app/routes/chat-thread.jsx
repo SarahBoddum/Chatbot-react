@@ -1,12 +1,16 @@
 import {
   useLoaderData,
   useActionData,
+  useNavigation,
   Link,
+  Outlet,
   useRouteError,
   href,
 } from "react-router";
 import { ChatMessages, ChatInput } from "../components/Chat.jsx";
 import { useState } from "react";
+import { apiFetch } from "../lib/apiFetch.js";
+
 /**
  * ERROR BOUNDARY COMPONENT
  *
@@ -62,14 +66,8 @@ export function ErrorBoundary() {
  * - When React Router revalidates data
  */
 export async function clientLoader({ params }) {
-  const apiUrl = import.meta.env.VITE_API_URL;
-
-
-  // Fetch thread metadata
-  // - id=eq.{threadId}: Filter to get only this specific thread
-  // - select=*: Get all columns
-  const threadUrl = `${apiUrl}/api/threads/${params.threadId}`;
-  const threadResponse = await fetch(threadUrl);
+  
+  const threadResponse = await apiFetch(`/api/threads/${params.threadId}`);
 
   if (threadResponse.status === 404) {
     throw new Response("Thread not found", { status: 404 });
@@ -86,9 +84,9 @@ export async function clientLoader({ params }) {
   // Fetch messages for this thread
   // - thread_id=eq.{threadId}: Filter messages by thread
   // - order=created_at.asc: Sort oldest to newest (chronological)
-  const messagesUrl = `${apiUrl}/api/threads/${params.threadId}/messages`;
-
-  const messagesResponse = await fetch(messagesUrl);
+  const messagesResponse = await apiFetch(
+    `/api/threads/${params.threadId}/messages`
+  );
 
   if (!messagesResponse.ok) {
     throw new Error(`Failed to fetch messages: ${messagesResponse.status}`);
@@ -178,12 +176,39 @@ const [theme, setTheme] = useState("light");
   // Access the action result (success or error)
   const actionData = useActionData();
 
+
+const navigation = useNavigation();
+
+let displayMessages = [...messages];
+
+if (navigation.formData?.has("message")) {
+  const optimisticUserMessage = {
+    id: "optimistic-user",
+    type: "user",
+    content: navigation.formData.get("message"),
+  };
+
+  const optimisticBotMessage = {
+    id: "optimistic-bot",
+    type: "bot",
+    content: "AI is thinking...",
+  };
+
+  displayMessages.push(
+    optimisticUserMessage,
+    optimisticBotMessage
+  );
+}
+
+
   return (
     <main className="chat-container">
+      <Outlet></Outlet>
       <div className="chat-thread-header">
         <h2>{thread.title}</h2>
+        <Link to="edit">Edit</Link>
       </div>
-      <ChatMessages messages={messages} theme={theme}/>
+      <ChatMessages messages={displayMessages} theme={theme}/>
       <ChatInput theme={theme} setTheme={setTheme}  />
       {actionData?.error && (
         <div className="error-message">{actionData.error}</div>

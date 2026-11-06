@@ -1,59 +1,113 @@
-# Chatbot Backend API
+# Backend API for the Chatbot
 
-## Om projektet
+This backend powers the chatbot application by handling thread and message storage in PostgreSQL and sending conversation history to Groq for AI-generated replies.
 
-Dette projekt indeholder backend-API'et til en chatbot. Backend er bygget med Node.js og Express og bruger en PostgreSQL-database til at hente og håndtere data om tråde og beskeder.
+The project is built with Node.js and Express.
 
-## Teknologier
+## Tech stack
 
 - Node.js
 - Express
 - PostgreSQL
-- `postgres` — databaseforbindelse
-- `cors` — tillader requests fra frontend
+- `postgres`
+- `cors`
 
-## Installation og opstart
+## Project structure
 
-### 1. Installer dependencies
+```text
+backend/
+├── db.js
+├── README.md
+├── package.json
+├── server.js
+├── .env
+├── .env.example
+```
 
-Gå ind i backend-mappen, og kør:
+## Requirements
+
+Before starting the backend, make sure you have:
+
+- Node.js installed
+- A PostgreSQL database available
+- A valid `DATABASE_URL`
+- A valid `GROQ_API_KEY`
+
+## Environment variables
+
+Create a `.env` file in the `backend/` folder.
+
+Example:
+
+```env
+DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@[HOST]:5432/postgres
+PORT=3000
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Notes:
+
+- `DATABASE_URL` is required to connect to PostgreSQL
+- `PORT` is optional and defaults to `3000`
+- `GROQ_API_KEY` is required for AI responses
+
+A sample file is available in `.env.example`.
+
+## Installation
+
+From the `backend` folder, run:
 
 ```bash
 npm install
 ```
 
-### 2. Konfigurer miljøvariabler
+## Run locally
 
-Opret en `.env`-fil i backend-mappen med de nødvendige miljøvariabler:
-
-```env
-DATABASE_URL=your_database_connection_string
-PORT=3000
-```
-
-Erstat `your_database_connection_string` med din PostgreSQL-databaseforbindelse.
-
-**Vigtigt:** Del ikke din databaseforbindelse eller andre hemmelige nøgler offentligt.
-
-### 3. Start backend-serveren
-
-Kør følgende kommando i backend-mappen:
+Development mode:
 
 ```bash
 npm run dev
 ```
 
-Serveren kører som standard på:
+Production mode:
 
-`http://localhost:3000`
+```bash
+npm start
+```
 
-## API Endpoints
+The backend runs on:
 
-### GET `/`
+```text
+http://localhost:3000
+```
 
-Returnerer en velkomstbesked fra API'et.
+## Database connection
 
-**Eksempel på response — `200 OK`:**
+The PostgreSQL client is created in `db.js`:
+
+```js
+import postgres from "postgres";
+
+const database_url = process.env.DATABASE_URL;
+
+if (!database_url) {
+  throw new Error("DATABASE_URL mangler. Tjek din .env-fil.");
+}
+
+const sql = postgres(database_url);
+
+export { sql };
+```
+
+This connection is used throughout `server.js` for fetching and saving data.
+
+## API endpoints
+
+### GET /
+
+Returns a welcome message.
+
+Example response:
 
 ```json
 {
@@ -61,109 +115,41 @@ Returnerer en velkomstbesked fra API'et.
 }
 ```
 
-### GET `/api/test`
+### GET /api/threads
 
-Kontrollerer, om API'et fungerer.
+Returns all threads sorted by newest first.
 
-**Eksempel på response — `200 OK`:**
-
-```json
-{
-  "message": "API virker!"
-}
-```
-
-### GET `/api/threads`
-
-Henter alle tråde fra databasen. Trådene sorteres efter oprettelsesdato, så de nyeste kommer først.
-
-**Eksempel på response — `200 OK`:**
+Example response:
 
 ```json
 [
   {
     "id": "123e4567-e89b-12d3-a456-426614174000",
-    "title": "Gruppechat",
+    "title": "My thread",
     "created_at": "2026-10-20T10:00:00.000Z"
   }
 ]
 ```
 
-Eksemplet viser strukturen af svaret. De faktiske værdier afhænger af databasen.
+### GET /api/threads/:id
 
-**Fejl — `500 Internal Server Error`:**
+Returns one thread by ID.
 
-Returneres, hvis der opstår en server- eller databasefejl.
-
-```json
-{
-  "error": "Der opstod en serverfejl ved hentning af tråde."
-}
-```
-
-### GET `/api/threads/:id`
-
-Henter information om en enkelt tråd ud fra dens ID.
-
-**URL-parameter:**
-
-| Parameter | Type | Beskrivelse |
-|---|---|---|
-| `id` | UUID | ID'et på den tråd, der skal hentes. |
-
-**Eksempel på request:**
-
-`GET /api/threads/123e4567-e89b-12d3-a456-426614174000`
-
-**Success response — `200 OK`:**
-
-Returnerer ét JSON-objekt med trådens information.
+Example response:
 
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
-  "title": "Gruppechat",
+  "title": "My thread",
   "created_at": "2026-10-20T10:00:00.000Z"
 }
 ```
 
-**Fejl — `404 Not Found`:**
+### GET /api/threads/:id/messages
 
-Returneres, hvis tråden ikke findes.
+Returns all messages in a thread ordered by creation time ascending.
 
-```json
-{
-  "error": "Tråden blev ikke fundet"
-}
-```
-
-**Fejl — `500 Internal Server Error`:**
-
-Returneres, hvis der opstår en fejl under hentning af tråden.
-
-```json
-{
-  "error": "Der opstod en fejl ved hentning af tråd"
-}
-```
-
-### GET `/api/threads/:id/messages`
-
-Henter alle beskeder, der tilhører en bestemt tråd. Beskederne sorteres efter `created_at` i stigende rækkefølge, så de ældste beskeder kommer først.
-
-**URL-parameter:**
-
-| Parameter | Type | Beskrivelse |
-|---|---|---|
-| `id` | UUID | ID'et på den tråd, hvis beskeder skal hentes. |
-
-**Eksempel på request:**
-
-`GET /api/threads/123e4567-e89b-12d3-a456-426614174000/messages`
-
-**Success response — `200 OK`:**
-
-Returnerer et JSON-array med beskeder.
+Example response:
 
 ```json
 [
@@ -171,109 +157,297 @@ Returnerer et JSON-array med beskeder.
     "id": "223e4567-e89b-12d3-a456-426614174000",
     "thread_id": "123e4567-e89b-12d3-a456-426614174000",
     "type": "user",
-    "content": "Hej alle!",
+    "content": "Hello!",
     "created_at": "2026-10-20T10:05:00.000Z"
   },
   {
     "id": "323e4567-e89b-12d3-a456-426614174000",
     "thread_id": "123e4567-e89b-12d3-a456-426614174000",
-    "type": "assistant",
-    "content": "Hej! Hvad kan jeg hjælpe med?",
+    "type": "bot",
+    "content": "Hi! How can I help?",
     "created_at": "2026-10-20T10:06:00.000Z"
   }
 ]
 ```
 
-Eksemplet viser strukturen af svaret. De faktiske værdier afhænger af databasen.
+### POST /api/threads
 
-**Ingen beskeder:**
+Creates a new thread and inserts the first user message in the same request.
 
-Hvis der ikke findes beskeder for tråden, returnerer endpointet et tomt array med status `200 OK`.
+This is a compound operation: it creates both a row in the `threads` table and a row in the `messages` table.
 
-```json
-[]
-```
-
-**Fejl — `500 Internal Server Error`:**
-
-Returneres, hvis der opstår en server- eller databasefejl under hentning af beskeder.
+Request body:
 
 ```json
 {
-  "error": "Der opstod en fejl ved hentning af beskeder"
+  "title": "My first thread",
+  "content": "Hello from the user"
 }
 ```
 
-## Testing
+Required fields:
 
-Du kan teste API'et med enten `curl` i terminalen eller direkte i en browser.
+- `title`: required string, cannot be empty or whitespace only
+- `content`: required string, cannot be empty or whitespace only
 
-### Forberedelse
+Behavior:
 
-1. Start backend-serveren med `npm run dev`.
-2. Kontrollér, at serveren kører på `http://localhost:3000`.
-3. Find et gyldigt tråd-ID (UUID) i databasen.
+1. Validates that `title` is a non-empty string.
+2. Validates that `content` is a non-empty string.
+3. Inserts a new thread with the provided title.
+4. Inserts the first user message linked to the new thread.
+5. Returns the created thread and message objects.
 
-**Bemærk:** Erstat `{id}` i nedenstående eksempler med et faktisk UUID. De krøllede parenteser skal ikke med i den endelige URL.
-
-### Test med curl
-
-**Hent alle tråde:**
-
-```bash
-curl -i http://localhost:3000/api/threads
-```
-
-**Hent en bestemt tråd:**
+Example success request:
 
 ```bash
-curl -i http://localhost:3000/api/threads/{id}
+curl -X POST http://localhost:3000/api/threads \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "My first thread",
+    "content": "Hello from the user"
+  }'
 ```
 
-**Hent beskeder for en bestemt tråd:**
+Success response — `201 Created`:
+
+```json
+{
+  "thread": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "title": "My first thread",
+    "created_at": "2026-10-20T10:00:00.000Z"
+  },
+  "message": {
+    "id": "223e4567-e89b-12d3-a456-426614174000",
+    "thread_id": "123e4567-e89b-12d3-a456-426614174000",
+    "type": "user",
+    "content": "Hello from the user",
+    "created_at": "2026-10-20T10:05:00.000Z"
+  }
+}
+```
+
+Validation errors:
+
+If `title` is missing or empty:
 
 ```bash
-curl -i http://localhost:3000/api/threads/{id}/messages
+curl -X POST http://localhost:3000/api/threads \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Hello from the user"
+  }'
 ```
 
-Flaget `-i` viser HTTP-statuskoden og response-headers sammen med svaret.
+Response:
 
-### Test i browseren
+```json
+{
+  "error": "Title is required"
+}
+```
 
-Åbn disse URL'er i browseren, og erstat `{id}` med et gyldigt UUID:
+If `content` is missing or empty:
 
-1. Alle tråde: `http://localhost:3000/api/threads`
-2. En bestemt tråd: `http://localhost:3000/api/threads/{id}`
-3. Beskeder for en bestemt tråd: `http://localhost:3000/api/threads/{id}/messages`
+```bash
+curl -X POST http://localhost:3000/api/threads \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "My first thread"
+  }'
+```
 
-Kontrollér, at:
+Response:
 
-- `/api/threads` returnerer et array af tråde.
-- `/api/threads/:id` returnerer ét trådobjekt.
-- `/api/threads/:id/messages` returnerer et array af beskeder eller `[]`, hvis der ikke er nogen beskeder.
-- Et ikke-eksisterende tråd-ID giver `404 Not Found` på `/api/threads/:id`.
+```json
+{
+  "error": "Content is required"
+}
+```
 
-### Fejlfinding
+If values are empty strings or whitespace-only:
 
-Hvis du ikke kan forbinde til API'et:
+```bash
+curl -X POST http://localhost:3000/api/threads \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "   ",
+    "content": "   "
+  }'
+```
 
-- Kontrollér, at backend-serveren stadig kører.
-- Kontrollér, at `PORT` matcher den port, du bruger i URL'en.
-- Kontrollér, at `DATABASE_URL` er korrekt konfigureret.
-- Kontrollér terminalen for server- eller databasefejl.
+Response:
 
-## Projektstruktur
+```json
+{
+  "error": "Title is required"
+}
+```
 
-En forenklet oversigt over backend-mappen:
+or
+
+```json
+{
+  "error": "Content is required"
+}
+```
+
+Note: this endpoint is a compound operation because the request creates both a thread and the first message in the same flow. If either insert fails, the request is treated as a server error.
+
+### POST /api/threads/:id/messages
+
+Creates a new message in an existing thread.
+
+Request body:
+
+```json
+{
+  "type": "user",
+  "content": "Tell me a joke"
+}
+```
+
+Example request:
+
+```bash
+curl -X POST http://localhost:3000/api/threads/123e4567-e89b-12d3-a456-426614174000/messages \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "user",
+    "content": "Tell me a joke"
+  }'
+```
+
+### DELETE /api/threads/:id
+
+Deletes a thread by ID.
+
+This endpoint removes the thread from the `threads` table.
+
+URL parameter:
+
+- `id`: ID of the thread to delete
+
+Example request:
+
+```bash
+curl -X DELETE http://localhost:3000/api/threads/123e4567-e89b-12d3-a456-426614174000
+```
+
+Success response — `200 OK`:
+
+```json
+{
+  "message": "Thread deleted successfully"
+}
+```
+
+If the thread does not exist, the endpoint returns `404 Not Found`:
+
+```json
+{
+  "error": "The thread was not found"
+}
+```
+
+If a database or server error occurs, the endpoint returns `500 Internal Server Error`:
+
+```json
+{
+  "error": "Failed to delete thread"
+}
+```
+
+## Groq integration
+
+The backend sends requests to:
 
 ```text
-backend/
-├── .env
-├── package.json
-├── db.js
-└── server.js
+https://api.groq.com/openai/v1/chat/completions
 ```
 
-- `db.js` opretter forbindelsen til PostgreSQL-databasen.
-- `server.js` indeholder Express-serveren og API-endpoints.
-- `.env` indeholder miljøvariabler til lokal udvikling og bør ikke deles offentligt.
+The current model configured in the project is:
+
+```text
+openai/gpt-oss-20b
+```
+
+The request is built like this:
+
+```js
+const response = await fetch(
+  "https://api.groq.com/openai/v1/chat/completions",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-oss-20b",
+      messages: groqMessages,
+    }),
+  }
+);
+```
+
+## Troubleshooting
+
+### Backend does not start
+
+Check:
+
+- `DATABASE_URL` exists in `.env`
+- the PostgreSQL database is reachable
+- dependencies are installed
+
+### Messages are saved but no bot reply appears
+
+Check:
+
+- `GROQ_API_KEY` is valid
+- the Groq model is available for your account
+- the backend logs show any Groq errors
+
+### API returns 500 errors
+
+Check:
+
+- SQL queries are valid
+- table names match your database schema
+- your database connection string is correct
+
+## Example test commands
+
+Get all threads:
+
+```bash
+curl http://localhost:3000/api/threads
+```
+
+Get one thread:
+
+```bash
+curl http://localhost:3000/api/threads/{id}
+```
+
+Get messages for one thread:
+
+```bash
+curl http://localhost:3000/api/threads/{id}/messages
+```
+
+Send a message:
+
+```bash
+curl -X POST http://localhost:3000/api/threads/{id}/messages \
+  -H "Content-Type: application/json" \
+  -d '{"type":"user","content":"Hello from curl"}'
+```
+
+Check Groq connection:
+
+```bash
+curl http://localhost:3000/api/test-groq
+```

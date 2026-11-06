@@ -1,28 +1,62 @@
+@font-face {
+  font-family: "Barbie";
+  src: url("/Barbie/BarbieFont/OpentypeOTF/Retro_Dolly.otf") format("opentype");
+  font-weight: lighter;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* CSS Variables */
 :root {
     /*---primary----*/
-  --light:#ffffff; --dark: #333538; 
+  --light:#ffffff; 
+  --lightpink1: #fde6f8;
+  --offwhite: #f9f9f9; 
+  --secondary-offwhite: #f9d8f2; 
+  --hover-light: #f9f9f9;
+  --hover-dark: #ffaaed;
+  --dark: #ffbce9; 
+  --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --font-secondary: "Barbie";
+  --blackgrey: #0d0d0d;
+  --darkpink: #b82d5c;
+  --light-grey: #e5e5e5;
+  --medium-grey: #6b7280;
+  --light-pink: #ef6dd5;
+  --medium-pink: #cf27ad;
+  --dark-pink: #890150;
+  --img: url(/images/barbielogo.png);
+
 /*semantisk---*/
 --messages-bg-light: var(--light);
 --messages-bg-dark: var(--dark);
-/*---dan'ske*/
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9f9f9;
-  --bg-hover: #f0f0f0;
-  --bg-message-user: #f1f3f5;
+--text-primary: var(--blackgrey);
+  --text-secondary: var(--darkpink);
+  --bg-primary: var(--light);
+  --bg-primary-pink: var( --lightpink1);
+  --bg-secondary: var(--offwhite);
+  --bg-secondary-barbie: var(--secondary-offwhite);
+  --bg-hover: var(--hover-light);
+  --bg-img: var(--img);
+
+  /*---dan'ske*/
+  --bg-message-user:  var(--offwhite);
   --bg-message-bot: transparent;
   --bg-button-primary: #4b5563;
-  --bg-button-primary-hover: #374151;
+  --bg-button-primary-hover: var(  --medium-grey);
+  --bg-buttin-secondary-hover: var(--hover-dark);
   --bg-button-disabled: #d1d5db;
-
-  --text-primary: #0d0d0d;
   --text-muted: #9ca3af;
   --text-button: #ffffff;
 
-  --border-light: #e5e5e5;
+  --border-light: var(--light-grey);
+  --border-light-secondary: var(--light-pink);
   --border-medium: #d1d5db;
-  --border-focus: #6b7280;
-
+  --border-medium-pink: var(--border-medium);
+  --border-focus: var(--medium-grey);
+  --border-focus-pink: var( --medium-pink);
+ --user-bg-dark: var(--lightpink1);
   --shadow-focus: rgba(107, 114, 128, 0.1);
 }
 
@@ -34,13 +68,19 @@
 }
 
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-family: var(--font-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  
 }
+body.theme-ligth{
+background-color: var(--messages-bg-light);
+}
+body.theme-dark{
+  background-color: var(--bg-primary-pink);
+}
+
 
 /* Layout styles */
 .app-layout {
@@ -48,6 +88,7 @@ body {
   height: 100vh;
   width: 100vw;
 }
+
 
 .sidebar {
   width: 260px;
@@ -57,6 +98,14 @@ body {
   flex-direction: column;
   height: 100%;
   position: relative;
+}
+.sidebar.theme-light {
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-light);
+}
+.sidebar.theme-dark{
+  background-color: var(--bg-secondary-barbie);
+  border-right: var(--border-light-secondary) 1px solid;
 }
 
 .main-content {
@@ -71,6 +120,15 @@ body {
   align-items: center;
   gap: 1em;
   border-bottom: 1px solid var(--border-light);
+  font-family: var(--font-primary);
+}
+
+.sidebar-header.theme-light {
+ font-family: var(--font-primary);
+}
+.sidebar-header.theme-dark {
+  font-family: "Barbie";
+  color: var(--text-secondary);
 }
 .chatbot-title {
   font-size: 1.125rem;
@@ -78,6 +136,7 @@ body {
   color: var(--text-primary);
   flex-grow: 1;
 }
+
 .new-chat-btn {
   display: flex;
   align-items: center;
@@ -90,6 +149,21 @@ body {
   text-decoration: none;
   cursor: pointer;
   transition: background 0.1s ease;
+}
+.sidebar-header.theme-dark .new-chat-btn {
+  border: var(--border-light-secondary) solid 1px;
+}
+.sidebar-header.theme-light h2,
+.sidebar-header.theme-light .new-chat-btn {
+  color: var(--text-primary);
+}
+
+.sidebar-header.theme-dark h2,
+.sidebar-header.theme-dark .new-chat-btn {
+  color: var(--text-secondary);
+}
+.sidebar-header.theme-dark .new-chat-btn:hover {
+  background: var(--bg-buttin-secondary-hover);
 }
 .new-chat-btn:hover {
   background: var(--bg-hover);
@@ -106,7 +180,6 @@ body {
   padding: 0.5rem;
   border-bottom: 1px solid var(--border-light);
 }
-
 .search-input {
   width: 100%;
   border: 1px solid var(--border-medium);
@@ -121,9 +194,31 @@ body {
     border-color 0.2s ease,
     box-shadow 0.2s ease;
 }
+.search-input.theme-light{
+  border: 1px solid var(--border-medium);
+    background: var(--bg-primary);
+  color: var(--text-primary);
+}
 
+.search-input.theme-dark{
+  border: 1px solid var(--border-light-secondary);
+  background: var(--bg-primary-pink);
+  color: var(--text-secondary);
+}
+.search-input.theme-dark::placeholder {
+  color: var(--text-secondary);
+  opacity: 50%;
+}
 .search-input:focus {
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--shadow-focus);
+}
+.search-input.theme-light:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--shadow-focus);
+}
+.search-input.theme-dark:focus {
+  border-color: var(--border-focus-pink);
   box-shadow: 0 0 0 2px var(--shadow-focus);
 }
 
@@ -230,6 +325,12 @@ body {
 .sidebar-footer {
   border-top: 1px solid var(--border-light);
 }
+.sidebar-footer.theme-light {
+  border-top: 1px solid var(--border-light);
+}
+.sidebar-footer.theme-dark {
+  border-top: 1px solid var(--border-light-secondary);
+}
 .user-profile {
   text-decoration: none;
   display: flex;
@@ -289,9 +390,23 @@ body {
 
 /* Dark theme */
 .chat-messages.theme-dark {
-  background-color: var(--messages-bg-dark);
+  position: relative;
+  isolation: isolate;
+  overflow-y: auto;
+  background: transparent;
 }
 
+.chat-messages.theme-dark::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--img);
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: right 20%;
+  z-index: -1;
+  pointer-events: none;
+}
 .message {
   display: flex;
   margin-bottom: 1rem;
@@ -320,9 +435,26 @@ body {
   border: 1px solid var(--border-light);
   border-bottom-right-radius: 4px;
 }
-
-.bot-message .message-content {
+.user-message.theme-light .message-content {
+  background-color: var(--bg-message-user);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  border-bottom-right-radius: 4px;
+}
+.user-message.theme-dark .message-content {
+  background-color: var(--messages-bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(  --border-light-secondary);
+  border-bottom-right-radius: 4px;
+}
+.bot-message.theme-light .message-content {
   background-color: var(--bg-message-bot);
+  color: var(--text-primary);
+  border: none;
+  border-bottom-left-radius: 4px;
+}
+.bot-message.theme-dark .message-content {
+  background-color: var(--user-bg-dark);
   color: var(--text-primary);
   border: none;
   border-bottom-left-radius: 4px;
@@ -336,6 +468,21 @@ body {
   position: sticky;
   bottom: 0;
 }
+.chat-input-container.theme-light {
+  padding: 1rem;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  position: sticky;
+  bottom: 0;
+}
+.chat-input-container.theme-dark {
+  padding: 1rem;
+  border-top: 1px solid var(--border-medium-pink);
+  background: var(--bg-primary);
+  position: sticky;
+  bottom: 0;
+}
+
 
 .chat-input-wrapper {
   display: flex;
