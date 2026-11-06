@@ -1,5 +1,6 @@
-import React, {useState} from "react";
+import React, {useState, useRef} from "react";
 import { Form, useNavigation } from "react-router";
+
 
 /**
  * Chat Components
@@ -22,9 +23,9 @@ import { Form, useNavigation } from "react-router";
  * 3. CLEANER CODE: No need to repeat "props." throughout the component
  * 4. SELF-DOCUMENTING: Shows exactly which props the component expects
  */
-function Message({ type = "user", children }) {
+function Message({ type = "user", children, theme }) {
   return (
-    <div className={`message ${type}-message`}>
+    <div className={`message ${type}-message theme-${theme}`}>
       <div className="message-content">{children}</div>
     </div>
   );
@@ -45,7 +46,7 @@ function ChatMessages({ messages = [], theme }) {
   return (
     <div className={`chat-messages theme-${theme}`}>
       {messages.map((message) => (
-        <Message key={message.id} type={message.type}>
+        <Message key={message.id} type={message.type} theme={theme}>
           {message.content}
         </Message>
       ))}
@@ -65,13 +66,15 @@ function ChatMessages({ messages = [], theme }) {
  * 5. DECLARATIVE: Just render the form, React Router handles the rest
  */
 function ChatInput({ theme, setTheme }) {
-  const navigation = useNavigation();
+    const textareaRef = useRef(null);
+ 
     console.log("theme:", theme);
   console.log("setTheme:", typeof setTheme);
   return (
-    <div className="chat-input-container">
+    <div className={`chat-input-container theme-${theme}`}>
       <Form method="post" className="chat-input-wrapper">
         <textarea
+          ref={textareaRef}
           name="message"
           className="chat-input"
           placeholder="Type your message here..."
@@ -92,7 +95,7 @@ function ChatInput({ theme, setTheme }) {
     );
   }}
 >
-  {theme === "light" ? "Dob core" : "Barbie core"}
+  {theme === "light" ? "Barbie core" : "DOB core"}
 </button>
       </Form>
     </div>

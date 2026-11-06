@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Barbie";
-  src: url("/siraman/Siraman.otf") format("opentype");
+  src: url("/Barbie/BarbieFont/OpentypeOTF/Retro_Dolly.otf") format("opentype");
   font-weight: lighter;
   font-style: normal;
   font-display: swap;
@@ -22,8 +22,10 @@
   --blackgrey: #0d0d0d;
   --darkpink: #b82d5c;
   --light-grey: #e5e5e5;
+  --medium-grey: #6b7280;
   --light-pink: #ef6dd5;
-  --medium-pink: #d945bb;
+  --medium-pink: #cf27ad;
+  --dark-pink: #890150;
   --img: url(/images/barbielogo.png);
 
 /*semantisk---*/
@@ -39,10 +41,10 @@
   --bg-img: var(--img);
 
   /*---dan'ske*/
-  --bg-message-user: #f1f3f5;
+  --bg-message-user:  var(--offwhite);
   --bg-message-bot: transparent;
   --bg-button-primary: #4b5563;
-  --bg-button-primary-hover: var(--dark);
+  --bg-button-primary-hover: var(  --medium-grey);
   --bg-buttin-secondary-hover: var(--hover-dark);
   --bg-button-disabled: #d1d5db;
   --text-muted: #9ca3af;
@@ -52,8 +54,9 @@
   --border-light-secondary: var(--light-pink);
   --border-medium: #d1d5db;
   --border-medium-pink: var(--border-medium);
-  --border-focus: #6b7280;
-
+  --border-focus: var(--medium-grey);
+  --border-focus-pink: var( --medium-pink);
+ --user-bg-dark: var(--lightpink1);
   --shadow-focus: rgba(107, 114, 128, 0.1);
 }
 
@@ -69,7 +72,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
-
+  
+}
+body.theme-ligth{
+background-color: var(--messages-bg-light);
+}
+body.theme-dark{
+  background-color: var(--bg-primary-pink);
 }
 
 
@@ -190,14 +199,26 @@ body {
     background: var(--bg-primary);
   color: var(--text-primary);
 }
-.search-input.theme-dark{
-  border: 1px solid var(--border-medium-pink);
-    background: var(--bg-primary-pink);
-  color: var(--text-primary);
-}
 
+.search-input.theme-dark{
+  border: 1px solid var(--border-light-secondary);
+  background: var(--bg-primary-pink);
+  color: var(--text-secondary);
+}
+.search-input.theme-dark::placeholder {
+  color: var(--text-secondary);
+  opacity: 50%;
+}
 .search-input:focus {
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--shadow-focus);
+}
+.search-input.theme-light:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--shadow-focus);
+}
+.search-input.theme-dark:focus {
+  border-color: var(--border-focus-pink);
   box-shadow: 0 0 0 2px var(--shadow-focus);
 }
 
@@ -369,12 +390,23 @@ body {
 
 /* Dark theme */
 .chat-messages.theme-dark {
-  background-image: var(--img);
-  background-size: 100%;
-  background-repeat: no-repeat;
-  background-position-y: 20%;
+  position: relative;
+  isolation: isolate;
+  overflow-y: auto;
+  background: transparent;
 }
 
+.chat-messages.theme-dark::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--img);
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: right 20%;
+  z-index: -1;
+  pointer-events: none;
+}
 .message {
   display: flex;
   margin-bottom: 1rem;
@@ -403,9 +435,26 @@ body {
   border: 1px solid var(--border-light);
   border-bottom-right-radius: 4px;
 }
-
-.bot-message .message-content {
+.user-message.theme-light .message-content {
+  background-color: var(--bg-message-user);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  border-bottom-right-radius: 4px;
+}
+.user-message.theme-dark .message-content {
+  background-color: var(--messages-bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(  --border-light-secondary);
+  border-bottom-right-radius: 4px;
+}
+.bot-message.theme-light .message-content {
   background-color: var(--bg-message-bot);
+  color: var(--text-primary);
+  border: none;
+  border-bottom-left-radius: 4px;
+}
+.bot-message.theme-dark .message-content {
+  background-color: var(--user-bg-dark);
   color: var(--text-primary);
   border: none;
   border-bottom-left-radius: 4px;
@@ -419,6 +468,21 @@ body {
   position: sticky;
   bottom: 0;
 }
+.chat-input-container.theme-light {
+  padding: 1rem;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  position: sticky;
+  bottom: 0;
+}
+.chat-input-container.theme-dark {
+  padding: 1rem;
+  border-top: 1px solid var(--border-medium-pink);
+  background: var(--bg-primary);
+  position: sticky;
+  bottom: 0;
+}
+
 
 .chat-input-wrapper {
   display: flex;

@@ -9,6 +9,8 @@ import {
 } from "react-router";
 import { ChatMessages, ChatInput } from "../components/Chat.jsx";
 import { useState } from "react";
+import { apiFetch } from "../lib/apiFetch.js";
+
 /**
  * ERROR BOUNDARY COMPONENT
  *
@@ -64,14 +66,8 @@ export function ErrorBoundary() {
  * - When React Router revalidates data
  */
 export async function clientLoader({ params }) {
-  const apiUrl = import.meta.env.VITE_API_URL;
-
-
-  // Fetch thread metadata
-  // - id=eq.{threadId}: Filter to get only this specific thread
-  // - select=*: Get all columns
-  const threadUrl = `${apiUrl}/api/threads/${params.threadId}`;
-  const threadResponse = await fetch(threadUrl);
+  
+  const threadResponse = await apiFetch(`/api/threads/${params.threadId}`);
 
   if (threadResponse.status === 404) {
     throw new Response("Thread not found", { status: 404 });
@@ -88,9 +84,9 @@ export async function clientLoader({ params }) {
   // Fetch messages for this thread
   // - thread_id=eq.{threadId}: Filter messages by thread
   // - order=created_at.asc: Sort oldest to newest (chronological)
-  const messagesUrl = `${apiUrl}/api/threads/${params.threadId}/messages`;
-
-  const messagesResponse = await fetch(messagesUrl);
+  const messagesResponse = await apiFetch(
+    `/api/threads/${params.threadId}/messages`
+  );
 
   if (!messagesResponse.ok) {
     throw new Error(`Failed to fetch messages: ${messagesResponse.status}`);

@@ -1,4 +1,5 @@
 import { useRouteLoaderData, Form, Link, redirect, useActionData, } from "react-router";
+import { apiFetch } from "../lib/apiFetch.js";
 
 export async function clientAction({ params, request }) {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -14,8 +15,8 @@ export async function clientAction({ params, request }) {
   }
 
 try {
-    const response = await fetch(
-      `${apiUrl}/api/threads/${params.threadId}`,
+    const response = await apiFetch(
+      `/api/threads/${params.threadId}`,
       {
         method: "PATCH",
         headers: {

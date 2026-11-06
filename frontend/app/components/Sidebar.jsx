@@ -1,5 +1,6 @@
-import React, {useState} from "react";
-import { href, Link, NavLink, useFetcher } from "react-router";
+import React, {useState, useEffect} from "react";
+import { href, Link, NavLink, useFetcher, Form } from "react-router";
+import { supabase } from "../lib/supabase.js";
 
 /**
  * Sidebar Components
@@ -152,18 +153,33 @@ function ChatThreadsList({ threads = [], theme }) {
  * Demonstrates component modularity and independence.
  */
 function SidebarFooter({theme}) {
+  const [userEmail, setUserEmail] = React.useState(null);
+
+useEffect (() => {
+  const getUser = async() => {
+    const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+   setUserEmail(session?.user?.email || null);
+};
+
+getUser();
+}, []);
+
   return (
     <div className={`sidebar-footer ${theme === "dark" ? "theme-dark" : ""}`}>
-      <a href="/profile" className="user-profile">
+      <Form method="POST" href="/profile" className="user-profile">
         <img
-          src="https://ui-avatars.com/api/?name=Batman&background=0D0D0D&color=fff&size=40"
+           src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userEmail || "User")}&background=0D0D0D&color=fff&size=40`}
           alt="User avatar"
           className="user-avatar"
           width={30}
           height={30}
         />
-        <span className="user-name">Batman</span>
-      </a>
+        <span className="user-name">{userEmail || "Loading..."}</span>
+      </Form>
+      <button name="intent" type="submit" value="logout">Logout</button>
     </div>
   );
 }
